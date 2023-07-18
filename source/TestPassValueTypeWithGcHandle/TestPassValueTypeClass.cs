@@ -42,15 +42,15 @@ namespace TestPassValueTypeWithGcHandle
         public void TestGcHandleWrapCsStructPassToUnmanagedDll()
         {
             PrintTestTitle("Test GCHandle wrapped C# struct pass to unmanaged dll");
-            TestStruct st = new TestStruct();
-            Console.WriteLine($"Before change value with unmanaged dll. {st.ToString()}");
+            TestStruct ts = new TestStruct();
+            Console.WriteLine($"Before change value with unmanaged dll. {ts.ToString()}");
 
-            GCHandle gcHandle = GCHandle.Alloc( st, GCHandleType.Pinned );
+            GCHandle gcHandle = GCHandle.Alloc( ts, GCHandleType.Pinned );
             IntPtr ptr = gcHandle.AddrOfPinnedObject();
             AssignValue( ptr, 100 );
-            Console.WriteLine($"After change value with unmanaged dll. {st.ToString()}");
-            st = (TestStruct)gcHandle.Target!;
-            Console.WriteLine($"After assign GCHandle.Target back to struct. {st.ToString()}");
+            Console.WriteLine($"After change value with unmanaged dll. {ts.ToString()}");
+            ts = (TestStruct)gcHandle.Target!;
+            Console.WriteLine($"After assign GCHandle.Target back to struct. {ts.ToString()}");
 
             gcHandle.Free();
         }
@@ -78,13 +78,13 @@ namespace TestPassValueTypeWithGcHandle
         public void TestGcHandleWrapCsClassPassToUnmanagedDll()
         {
             PrintTestTitle("Test GCHandle wrapped C# class pass to unmanaged dll");
-            TestClass sc = new TestClass();
-            Console.WriteLine($"Before change value with unmanaged dll. {sc.ToString()}");
+            TestClass tc = new TestClass();
+            Console.WriteLine($"Before change value with unmanaged dll. {tc.ToString()}");
 
-            GCHandle gcHandle = GCHandle.Alloc( sc, GCHandleType.Pinned );
+            GCHandle gcHandle = GCHandle.Alloc( tc, GCHandleType.Pinned );
             IntPtr ptr = gcHandle.AddrOfPinnedObject();
             AssignValue( ptr, 100 );
-            Console.WriteLine($"After change value with unmanaged dll. {sc.ToString()}");
+            Console.WriteLine($"After change value with unmanaged dll. {tc.ToString()}");
 
             gcHandle.Free();
         }
@@ -111,6 +111,49 @@ namespace TestPassValueTypeWithGcHandle
         public void TestPassStructWithMarshal()
         {
             PrintTestTitle("Test pass C# struct with Marshal.");
+            TestStruct ts = new TestStruct(20);
+            Console.WriteLine($"Before change value with unmanaged dll. {ts.ToString()}");
+
+            int size = Marshal.SizeOf(ts);
+#if USE_ALLOC_H_GLOBSL
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+#else
+            IntPtr ptr = Marshal.AllocCoTaskMem(size);
+#endif //USE_ALLOC_H_GLOBSL
+            Marshal.StructureToPtr(ts, ptr, false );
+            AssignValue( ptr, 100 );
+            Console.WriteLine($"After change value with unmanaged dll. {ts.ToString()}");
+            ts = (TestStruct)Marshal.PtrToStructure( ptr, typeof(TestStruct))!;
+            Console.WriteLine($"After assign GCHandle.Target back to struct. {ts.ToString()}");
+#if USE_ALLOC_H_GLOBSL
+            Marshal .FreeHGlobal( ptr );
+#else
+            Marshal.FreeCoTaskMem( ptr );
+#endif //USE_ALLOC_H_GLOBSL
+        }
+
+        public void TestPassClassWithMarshal()
+        {
+            PrintTestTitle("Test pass C# class with Marshal.");
+            TestClass tc = new TestClass(20);
+            Console.WriteLine($"Before change value with unmanaged dll. {tc.ToString()}");
+
+            int size = Marshal.SizeOf(tc);
+#if USE_ALLOC_H_GLOBSL
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+#else
+            IntPtr ptr = Marshal.AllocCoTaskMem(size);
+#endif //USE_ALLOC_H_GLOBSL
+            Marshal.StructureToPtr(tc, ptr, false);
+            AssignValue( ptr, 100 );
+            Console.WriteLine($"After change value with unmanaged dll. {tc.ToString()}");
+            tc = (TestClass)Marshal.PtrToStructure(ptr, typeof(TestClass))!;
+            Console.WriteLine($"After assign GCHandle.Target back to class. {tc.ToString()}");
+#if USE_ALLOC_H_GLOBSL
+            Marshal .FreeHGlobal( ptr );
+#else
+            Marshal.FreeCoTaskMem( ptr );
+#endif //USE_ALLOC_H_GLOBSL
         }
     }
 }
