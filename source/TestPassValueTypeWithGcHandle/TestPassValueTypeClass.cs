@@ -16,7 +16,7 @@ namespace TestPassValueTypeWithGcHandle
             Console.WriteLine($"\n\n===== {title} =====");
         }
 
-        [DllImport("./UnmanagedDll.dll", EntryPoint = "AssignValue", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport("UnmanagedDll.dll", EntryPoint = "AssignValue", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         private static extern void AssignValue(IntPtr obj, int val);
 
         [StructLayout(LayoutKind.Sequential)]
@@ -27,11 +27,32 @@ namespace TestPassValueTypeWithGcHandle
             public TestStruct()
             { 
             }
+
+            public TestStruct(int a)
+            {
+                A = a;
+            }
+
+            public override string ToString() 
+            {
+                return $"TestStruct.A = {A}";
+            }
         }
 
         public void TestGcHandleWrapCsStructPassToUnmanagedDll()
         {
             PrintTestTitle("Test GCHandle wrapped C# struct pass to unmanaged dll");
+            TestStruct st = new TestStruct();
+            Console.WriteLine($"Before change value with unmanaged dll. {st.ToString()}");
+
+            GCHandle gcHandle = GCHandle.Alloc( st, GCHandleType.Pinned );
+            IntPtr ptr = gcHandle.AddrOfPinnedObject();
+            AssignValue( ptr, 100 );
+            Console.WriteLine($"After change value with unmanaged dll. {st.ToString()}");
+            st = (TestStruct)gcHandle.Target!;
+            Console.WriteLine($"After assign GCHandle.Target back to struct. {st.ToString()}");
+
+            gcHandle.Free();
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -42,11 +63,30 @@ namespace TestPassValueTypeWithGcHandle
             public TestClass()
             { 
             }
+
+            public TestClass(int a)
+            {
+                A = a;
+            }
+
+            public override string ToString() 
+            {
+                return $"TestClass.A = {A}";
+            }
         }
 
         public void TestGcHandleWrapCsClassPassToUnmanagedDll()
         {
             PrintTestTitle("Test GCHandle wrapped C# class pass to unmanaged dll");
+            TestClass sc = new TestClass();
+            Console.WriteLine($"Before change value with unmanaged dll. {sc.ToString()}");
+
+            GCHandle gcHandle = GCHandle.Alloc( sc, GCHandleType.Pinned );
+            IntPtr ptr = gcHandle.AddrOfPinnedObject();
+            AssignValue( ptr, 100 );
+            Console.WriteLine($"After change value with unmanaged dll. {sc.ToString()}");
+
+            gcHandle.Free();
         }
 
         public void TestModifiedValueTypeWithGcHandleAndPointer()
