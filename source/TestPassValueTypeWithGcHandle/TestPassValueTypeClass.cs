@@ -52,6 +52,20 @@ namespace TestPassValueTypeWithGcHandle
         public void TestModifiedValueTypeWithGcHandleAndPointer()
         {
             PrintTestTitle("Test modified value type variable with GCHandle and pointer.");
+            unsafe
+            {
+                int i = 0;
+
+                object oi = i;
+                var gcHandle = GCHandle.Alloc(oi, GCHandleType.Pinned);
+                int* pi = (int*)gcHandle.AddrOfPinnedObject();
+                *pi += 1;
+                Console.WriteLine($"Through GCHandle to get value type address and add: origin = {i}, after GCHandle changed value = {*pi} and the value of {nameof(gcHandle.Target)} = {gcHandle.Target}");
+
+                int* ptr_i = &i;
+                *ptr_i += 1;
+                Console.WriteLine($"Got pointer of value type directly and add: origin = {i}, after pointer changed value = {*ptr_i}");
+            }
         }
 
         public void TestPassStructWithMarshal()
